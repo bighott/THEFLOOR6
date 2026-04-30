@@ -3697,7 +3697,7 @@ export const categories = [
       cd('Catfish','Catfish: The TV Show',"Nev Schulman and co-host approaching a door — trying to reveal the real identity of someone's online romantic interest who won't video call.",['Catfish Show']),
       cd('Ex on the Beach','Ex on the Beach',"A surprise ex walking up from the ocean — the beach house scene where a cast member's former partner dramatically arrives.",['Ex on Beach']),
       cd('The Challenge','The Challenge (TV series)',"Real World and Road Rules alumni competing in extreme physical challenges — obstacle courses, puzzles, and political house dynamics.",['MTV Challenge']),
-      cd('Floribama Shore','MTV Floribama Shore',"A group of Southern friends in a beach house on the Florida-Alabama shore — similar to Jersey Shore but with a Southern accent.",['Floribama']),
+      cd('Floribama Shore','Floribama Shore',"A group of Southern friends in a beach house on the Florida-Alabama shore — similar to Jersey Shore but with a Southern accent.",['Floribama']),
       cd('Siesta Key','Siesta Key (TV series)',"Young people on the beaches of Sarasota, Florida — yacht parties, luxury homes, and drama-filled relationships in paradise.",['Siesta Key']),
       cd('Are You the One?','Are You the One?',"Singles in a villa trying to find their 'perfect match' — the blackout ceremony where couples stand in front of beams to confirm a match.",['AYTO']),
       cd('Ridiculousness','Ridiculousness (TV series)',"Rob Dyrdek on a talk show set watching viral fail videos — a couch with two guests and a screen showing absurd crash videos.",['Ridiculousness']),

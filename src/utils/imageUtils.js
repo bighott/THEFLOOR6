@@ -42,7 +42,10 @@ async function fetchViaSearch(wikiTitle) {
     if (!res.ok) return null
     const data = await res.json()
     const results = data.query?.search || []
+    const words = wikiTitle.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(w => w.length > 2)
     for (const result of results) {
+      const titleLower = result.title.toLowerCase()
+      if (words.length > 0 && !words.some(w => titleLower.includes(w))) continue
       const url = await fetchViaMediaWikiAPI(result.title)
       if (url) return url
     }
@@ -205,15 +208,16 @@ export async function fetchStudyData(item) {
     articleImgs.forEach(addImg)
   }
 
-  // Tier 4: Commons file-name search by answer term
+  // Tier 4: Commons file-name search — prefer the disambiguated wikiTitle over bare answer
   if (images.length < 2) {
-    const searchImgs = await getCommonsSearchImages(item.answer)
+    const searchTerm = (item.wikiTitle && item.wikiTitle !== item.answer) ? item.wikiTitle : item.answer
+    const searchImgs = await getCommonsSearchImages(searchTerm)
     searchImgs.forEach(addImg)
   }
 
-  // Tier 5: Commons search by wikiTitle if different from answer
+  // Tier 5: fallback to bare answer if wikiTitle search above found nothing
   if (images.length < 1 && item.wikiTitle && item.wikiTitle !== item.answer) {
-    const commonsImgs = await getCommonsSearchImages(item.wikiTitle)
+    const commonsImgs = await getCommonsSearchImages(item.answer)
     commonsImgs.forEach(addImg)
   }
 
