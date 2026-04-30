@@ -37,7 +37,7 @@ function StudyCard({ item, index }) {
 
   // Build "what to look for" clues
   const clues = []
-  if (data?.extract) {
+  if (!item.desc && data?.extract) {
     const firstSentence = data.extract.split(/(?<=[.!?])\s+/)[0] || data.extract.slice(0, 150)
     clues.push(firstSentence)
   }
@@ -83,12 +83,10 @@ function StudyCard({ item, index }) {
           </div>
 
           {/* About section */}
-          {data.extract && (
+          {(item.desc || data.extract) && (
             <div className="study-about">
               <strong>About</strong>
-              {data.extract.length >= 600
-                ? data.extract.slice(0, 600) + '…'
-                : data.extract}
+              {item.desc || (data.extract.length >= 600 ? data.extract.slice(0, 600) + '…' : data.extract)}
             </div>
           )}
 
