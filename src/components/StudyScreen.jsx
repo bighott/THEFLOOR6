@@ -48,6 +48,7 @@ function StudyCard({ item, index }) {
   return (
     <div className="study-card" ref={cardRef}>
       <div className="study-item-name">{displayName}</div>
+      {item.note && <div className="study-item-note">{item.note}</div>}
       {alts.length > 0 && (
         <div className="study-item-alts">Also accepted: {alts.join(', ')}</div>
       )}

@@ -731,6 +731,15 @@
   color: var(--text);
 }
 
+.study-item-note {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold);
+  background: rgba(212,175,55,0.1);
+  border-radius: 6px;
+  padding: 4px 10px;
+  display: inline-block;
+}
 .study-item-alts {
   font-size: 13px;
   color: var(--text-muted);
