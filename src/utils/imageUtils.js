@@ -81,12 +81,11 @@ function levenshtein(a, b) {
 // ── STUDY DATA ────────────────────────────────────────────────────────────────
 const studyCache = new Map()
 
-const IMG_EXCLUDE = /(icon|logo|flag|seal|button|arrow|blank|map|locator|commons|wikimedia|edit|stub|question|red_x|checkmark)/i
+const IMG_EXCLUDE = /(icon|logo|flag|seal|button|arrow|blank|map|locator|commons|wikimedia|edit|stub|question|red_x|checkmark|range|distribution|habitat)/i
 
 async function resolveFileUrls(titles, host = 'en.wikipedia.org') {
   if (!titles.length) return []
   try {
-    // Do NOT encode the | separator — MediaWiki needs it as a literal pipe
     const joined = titles.map(t => t.replace(/ /g, '_')).join('|')
     const res = await fetch(
       `https://${host}/w/api.php?action=query&titles=${joined}&prop=imageinfo&iiprop=url&iiurlwidth=500&format=json&origin=*`
@@ -99,6 +98,33 @@ async function resolveFileUrls(titles, host = 'en.wikipedia.org') {
   } catch { return [] }
 }
 
+// Best source: Wikimedia Commons category linked from the Wikipedia article.
+// These images are curated specifically for that subject.
+async function getCommonsCategoryImages(wikiTitle) {
+  try {
+    const propsRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(wikiTitle)}&prop=pageprops&format=json&origin=*`
+    )
+    if (!propsRes.ok) return []
+    const propsData = await propsRes.json()
+    const pages = Object.values(propsData.query?.pages || {})
+    const category = pages[0]?.pageprops?.commonscategory
+    if (!category) return []
+
+    const catRes = await fetch(
+      `https://commons.wikimedia.org/w/api.php?action=query&list=categorymembers&cmtitle=Category:${encodeURIComponent(category)}&cmnamespace=6&cmlimit=8&format=json&origin=*`
+    )
+    if (!catRes.ok) return []
+    const catData = await catRes.json()
+    const titles = (catData.query?.categorymembers || [])
+      .map(m => m.title)
+      .filter(t => /\.(jpg|jpeg|png)$/i.test(t) && !IMG_EXCLUDE.test(t))
+      .slice(0, 4)
+    return resolveFileUrls(titles, 'commons.wikimedia.org')
+  } catch { return [] }
+}
+
+// Fallback: first few images embedded in the Wikipedia article itself
 async function getWikiArticleImages(wikiTitle) {
   try {
     const res = await fetch(
@@ -110,19 +136,22 @@ async function getWikiArticleImages(wikiTitle) {
     const files = (pages[0]?.images || [])
       .map(img => img.title)
       .filter(f => /\.(jpg|jpeg|png)$/i.test(f) && !IMG_EXCLUDE.test(f))
-      .slice(0, 5)
+      .slice(0, 4)
     return resolveFileUrls(files)
   } catch { return [] }
 }
 
-async function getCommonsImages(query) {
+// Last resort: Commons file-name search (less precise but broad coverage)
+async function getCommonsSearchImages(query) {
   try {
     const res = await fetch(
-      `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srnamespace=6&srlimit=5&format=json&origin=*`
+      `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srnamespace=6&srlimit=6&format=json&origin=*`
     )
     if (!res.ok) return []
     const data = await res.json()
-    const titles = (data.query?.search || []).map(r => r.title)
+    const titles = (data.query?.search || [])
+      .map(r => r.title)
+      .filter(t => !IMG_EXCLUDE.test(t))
     if (!titles.length) return []
     return resolveFileUrls(titles, 'commons.wikimedia.org')
   } catch { return [] }
@@ -147,7 +176,7 @@ export async function fetchStudyData(item) {
 
   const lookupTitle = item.wikiTitle || item.answer
 
-  // Wikipedia REST summary → extract + primary image
+  // Tier 1: Wikipedia REST summary → extract + primary image (most reliable)
   try {
     const res = await fetch(
       `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(lookupTitle)}`,
@@ -164,21 +193,27 @@ export async function fetchStudyData(item) {
     }
   } catch {}
 
-  // If still need more images, pull from the Wikipedia article's image list
+  // Tier 2: Wikimedia Commons category (curated, subject-specific images)
+  if (images.length < 3 && item.wikiTitle) {
+    const catImgs = await getCommonsCategoryImages(item.wikiTitle)
+    catImgs.forEach(addImg)
+  }
+
+  // Tier 3: Wikipedia article image list (first few images on the article page)
   if (images.length < 3) {
     const articleImgs = await getWikiArticleImages(lookupTitle)
     articleImgs.forEach(addImg)
   }
 
-  // Still short? Search Wikimedia Commons directly for the answer term
+  // Tier 4: Commons file-name search by answer term
   if (images.length < 2) {
-    const commonsImgs = await getCommonsImages(item.answer)
-    commonsImgs.forEach(addImg)
+    const searchImgs = await getCommonsSearchImages(item.answer)
+    searchImgs.forEach(addImg)
   }
 
-  // Last resort: broader Commons search using the wiki title if different
+  // Tier 5: Commons search by wikiTitle if different from answer
   if (images.length < 1 && item.wikiTitle && item.wikiTitle !== item.answer) {
-    const commonsImgs = await getCommonsImages(item.wikiTitle)
+    const commonsImgs = await getCommonsSearchImages(item.wikiTitle)
     commonsImgs.forEach(addImg)
   }
 
