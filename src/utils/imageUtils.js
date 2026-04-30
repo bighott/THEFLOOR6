@@ -81,96 +81,108 @@ function levenshtein(a, b) {
 // ── STUDY DATA ────────────────────────────────────────────────────────────────
 const studyCache = new Map()
 
+const IMG_EXCLUDE = /(icon|logo|flag|seal|button|arrow|blank|map|locator|commons|wikimedia|edit|stub|question|red_x|checkmark)/i
+
+async function resolveFileUrls(titles, host = 'en.wikipedia.org') {
+  if (!titles.length) return []
+  try {
+    // Do NOT encode the | separator — MediaWiki needs it as a literal pipe
+    const joined = titles.map(t => t.replace(/ /g, '_')).join('|')
+    const res = await fetch(
+      `https://${host}/w/api.php?action=query&titles=${joined}&prop=imageinfo&iiprop=url&iiurlwidth=500&format=json&origin=*`
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+    return Object.values(data.query?.pages || {})
+      .map(p => p.imageinfo?.[0]?.url)
+      .filter(Boolean)
+  } catch { return [] }
+}
+
+async function getWikiArticleImages(wikiTitle) {
+  try {
+    const res = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(wikiTitle)}&prop=images&imlimit=15&format=json&origin=*`
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+    const pages = Object.values(data.query?.pages || {})
+    const files = (pages[0]?.images || [])
+      .map(img => img.title)
+      .filter(f => /\.(jpg|jpeg|png)$/i.test(f) && !IMG_EXCLUDE.test(f))
+      .slice(0, 5)
+    return resolveFileUrls(files)
+  } catch { return [] }
+}
+
+async function getCommonsImages(query) {
+  try {
+    const res = await fetch(
+      `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srnamespace=6&srlimit=5&format=json&origin=*`
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+    const titles = (data.query?.search || []).map(r => r.title)
+    if (!titles.length) return []
+    return resolveFileUrls(titles, 'commons.wikimedia.org')
+  } catch { return [] }
+}
+
 export async function fetchStudyData(item) {
   const cacheKey = item.answer
   if (studyCache.has(cacheKey)) return studyCache.get(cacheKey)
 
+  const seen = new Set()
   const images = []
   let extract = ''
 
-  // 1. Use provided imageUrl as primary image
-  if (item.imageUrl) {
-    images.push(item.imageUrl)
-  }
-
-  // 2. Fetch Wikipedia data if wikiTitle exists
-  if (item.wikiTitle) {
-    try {
-      // Fetch REST summary for extract text + primary image
-      const summaryRes = await fetch(
-        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(item.wikiTitle)}`,
-        { headers: { Accept: 'application/json' } }
-      )
-      if (summaryRes.ok) {
-        const summaryData = await summaryRes.json()
-        if (summaryData.extract) {
-          extract = summaryData.extract.slice(0, 600)
-        }
-        // If no imageUrl was provided, use the Wikipedia primary image
-        if (!item.imageUrl) {
-          const primaryImg =
-            summaryData.originalimage?.source ||
-            summaryData.thumbnail?.source ||
-            null
-          if (primaryImg) {
-            const normalized = summaryData.thumbnail?.source && !summaryData.originalimage?.source
-              ? summaryData.thumbnail.source.replace(/\/\d+px-/, '/500px-')
-              : primaryImg
-            images.push(normalized)
-          }
-        }
-      }
-    } catch {
-      // ignore
-    }
-
-    // 3. Fetch list of images from the article
-    try {
-      const imgListRes = await fetch(
-        `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(item.wikiTitle)}&prop=images&imlimit=10&format=json&origin=*`
-      )
-      if (imgListRes.ok) {
-        const imgListData = await imgListRes.json()
-        const pages = Object.values(imgListData.query?.pages || {})
-        const page = pages[0]
-        const rawFiles = (page?.images || []).map((img) => img.title)
-
-        // Filter: keep only jpg/jpeg/png, exclude icons/logos/flags etc.
-        const EXCLUDE = /(icon|logo|flag|seal|button|arrow|blank|map|locator|commons|wikimedia)/i
-        const filtered = rawFiles.filter((f) => {
-          const lower = f.toLowerCase()
-          return /\.(jpg|jpeg|png)$/.test(lower) && !EXCLUDE.test(lower)
-        })
-
-        // Take up to 4 candidates to batch-resolve
-        const candidates = filtered.slice(0, 4)
-
-        if (candidates.length > 0) {
-          const titlesParam = candidates.join('|')
-          const resolveRes = await fetch(
-            `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(titlesParam)}&prop=imageinfo&iiprop=url&iiurlwidth=500&format=json&origin=*`
-          )
-          if (resolveRes.ok) {
-            const resolveData = await resolveRes.json()
-            const resolvedPages = Object.values(resolveData.query?.pages || {})
-            for (const p of resolvedPages) {
-              const url = p.imageinfo?.[0]?.url
-              if (url && !images.includes(url)) {
-                images.push(url)
-              }
-            }
-          }
-        }
-      }
-    } catch {
-      // ignore
+  const addImg = (url) => {
+    if (url && !seen.has(url) && images.length < 3) {
+      seen.add(url); images.push(url)
     }
   }
 
-  // Cap images at 3, deduplicated
-  const uniqueImages = [...new Set(images)].slice(0, 3)
+  // Direct imageUrl (e.g. Shakespeare plays with Wikimedia Commons links)
+  if (item.imageUrl) addImg(item.imageUrl)
 
-  const result = { images: uniqueImages, extract }
+  const lookupTitle = item.wikiTitle || item.answer
+
+  // Wikipedia REST summary → extract + primary image
+  try {
+    const res = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(lookupTitle)}`,
+      { headers: { Accept: 'application/json' } }
+    )
+    if (res.ok) {
+      const d = await res.json()
+      if (d.extract) extract = d.extract.slice(0, 600)
+      if (!item.imageUrl) {
+        const img = d.originalimage?.source ||
+          (d.thumbnail?.source ? d.thumbnail.source.replace(/\/\d+px-/, '/500px-') : null)
+        addImg(img)
+      }
+    }
+  } catch {}
+
+  // If still need more images, pull from the Wikipedia article's image list
+  if (images.length < 3) {
+    const articleImgs = await getWikiArticleImages(lookupTitle)
+    articleImgs.forEach(addImg)
+  }
+
+  // Still short? Search Wikimedia Commons directly for the answer term
+  if (images.length < 2) {
+    const commonsImgs = await getCommonsImages(item.answer)
+    commonsImgs.forEach(addImg)
+  }
+
+  // Last resort: broader Commons search using the wiki title if different
+  if (images.length < 1 && item.wikiTitle && item.wikiTitle !== item.answer) {
+    const commonsImgs = await getCommonsImages(item.wikiTitle)
+    commonsImgs.forEach(addImg)
+  }
+
+  const result = { images, extract }
   studyCache.set(cacheKey, result)
   return result
 }
