@@ -2,6 +2,7 @@ import { useState } from 'react'
 import HomeScreen from './components/HomeScreen'
 import QuizScreen from './components/QuizScreen'
 import ScoreScreen from './components/ScoreScreen'
+import StudyScreen from './components/StudyScreen'
 import './App.css'
 
 export default function App() {
@@ -13,6 +14,11 @@ export default function App() {
     setSelectedCategory(category)
     setQuizResults(null)
     setScreen('quiz')
+  }
+
+  const startStudy = (category) => {
+    setSelectedCategory(category)
+    setScreen('study')
   }
 
   const finishQuiz = (results) => {
@@ -33,7 +39,7 @@ export default function App() {
 
   return (
     <div className="app">
-      {screen === 'home' && <HomeScreen onStartQuiz={startQuiz} />}
+      {screen === 'home' && <HomeScreen onStartQuiz={startQuiz} onStudy={startStudy} />}
       {screen === 'quiz' && (
         <QuizScreen
           key={selectedCategory?.id + (quizResults ? '-retake-' + Date.now() : '')}
@@ -48,6 +54,13 @@ export default function App() {
           category={selectedCategory}
           onRetake={retakeQuiz}
           onHome={goHome}
+        />
+      )}
+      {screen === 'study' && (
+        <StudyScreen
+          category={selectedCategory}
+          onHome={goHome}
+          onSwitchCategory={startStudy}
         />
       )}
     </div>
