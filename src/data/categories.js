@@ -5,6 +5,7 @@ const cn = (answer, wikiTitle, note, alts = []) => ({ answer, wikiTitle, note, a
 const cd = (answer, wikiTitle, desc, alts = []) => ({ answer, wikiTitle, desc, alternates: alts })
 const cid = (answer, imageUrl, desc, alts = []) => ({ answer, imageUrl, desc, alternates: alts })
 const cnd = (answer, wikiTitle, note, desc, alts = []) => ({ answer, wikiTitle, note, desc, alternates: alts })
+const cdo = (answer, desc, alts = []) => ({ answer, desc, alternates: alts })
 
 export const categories = [
   {
@@ -295,6 +296,44 @@ export const categories = [
       c('Pericles','Pericles, Prince of Tyre'),
       c('Cymbeline','Cymbeline'),
       c('The Two Noble Kinsmen','The Two Noble Kinsmen',['Two Noble Kinsmen']),
+    ]
+  },
+  {
+    id: 'shakespeare-descriptions', name: 'Shakespeare Plays (Descriptions)', subject: 'Arts & Culture', difficulty: 'Hard',
+    description: 'Read the description of a famous painting or scene — name the Shakespeare play. Wrong answers cycle back to the end until you master them all.',
+    descriptionOnly: true,
+    requeueWrong: true,
+    items: [
+      cdo('Hamlet',"Millais' Ophelia — a pale woman in a white floral dress floating on her back in a stream, arms outstretched, eyes open, surrounded by flowers and lush green vegetation."),
+      cdo('Romeo and Juliet',"Hayez's painting — a passionate kiss on a staircase. A young man in a red medieval doublet embraces a woman in a pale blue gown. Romantic, intense pose."),
+      cdo('Macbeth',"Fuseli's Three Witches — three eerily lit, pale-faced women with outstretched arms and pointing fingers against a dark stormy background. Supernatural and sinister."),
+      cdo("A Midsummer Night's Dream","A fairy queen (Titania) asleep or embracing a man with a donkey's head (Bottom) — lush green forest, fairies, flowers everywhere. Whimsical and dreamlike.",["Midsummer Night's Dream"]),
+      cdo('Othello',"Muñoz Degrain's painting — a dark-skinned Moorish man in rich Renaissance dress with a pale woman in white. Dramatic, dimly lit interior; tragic atmosphere."),
+      cdo('King Lear',"An old bearded king in robes holding a dead young woman in his arms — anguished expression, dramatic lighting, a vast stormy landscape backdrop."),
+      cdo('The Tempest',"Waterhouse's painting — a woman (Miranda) reading on a rocky seashore, with a crouching dark figure (Caliban) lurking in shadows nearby. Dreamy and mysterious.",['Tempest']),
+      cdo('Much Ado About Nothing',"Alfred Elmore's painting — a woman in a bright period gown holding a letter, in an Italianate garden setting. Playful and romantic, not tragic."),
+      cdo('Twelfth Night',"Deverell's painting — a woman dressed as a male page presenting something to a grand lady (Olivia). Bright colours, Elizabethan costumes, formal garden setting."),
+      cdo('The Merchant of Venice',"A woman disguised as a lawyer in robes (Portia) in a courtroom confrontation with a grey-bearded man in dark clothing (Shylock). Tense legal drama setting.",['Merchant of Venice']),
+      cdo('Julius Caesar',"Camuccini's 'Death of Caesar' — toga-clad men in a crowded marble Roman room, a man collapsed among them and senators with daggers raised. Very dramatic."),
+      cdo('Richard III',"A man being drowned in a large wooden barrel (a butt of malmsey wine) — dark, grim scene with hands and struggling figures. Historical murder."),
+      cdo('Henry V',"Gilbert's painting — a king on horseback in armour at Agincourt; chaotic medieval battlefield, armoured soldiers, horses, flags. Heroic battle scene."),
+      cdo('As You Like It',"John Pettie's painting — characters in Elizabethan/rustic costume in an outdoor pastoral setting. The Forest of Arden; joyful, romantic atmosphere."),
+      cdo('The Taming of the Shrew',"Washington Allston's combative domestic scene — a man (Petruchio) and woman (Katherine) in period dress, confrontational poses, interior setting.",['Taming of the Shrew']),
+      cdo("The Winter's Tale","Harlow's painting — a stately woman in white (Hermione) before a dark, agitated king (Leontes). Formal Elizabethan court setting, tense interaction.",["Winter's Tale"]),
+      cdo('Antony and Cleopatra',"Alma-Tadema's meeting scene — a queen reclining on a luxurious golden barge with a Roman general in armour. Rich colours, Egyptian and Roman opulence."),
+      cdo('Measure for Measure',"Holman Hunt's painting — a brother and sister in an intimate, imploring conversation. He wears prisoner garb; she is a novice nun. Dimly lit interior."),
+      cdo('The Merry Wives of Windsor',"A comedic Tudor-English scene — a fat boastful knight (Falstaff) hidden in a laundry basket or disguised as an old woman, mocked by two clever wives plotting against him.",['Merry Wives of Windsor']),
+      cdo('Coriolanus',"A proud Roman general in armour kneeling before his mother (Volumnia) outside the gates of Rome, with the Volscian army camped behind him. The pivotal mother–son confrontation."),
+      cdo('Titus Andronicus',"Shakespeare's bloodiest revenge tragedy — a Roman general grieving his mutilated daughter Lavinia (no hands, no tongue). Severed heads, a cannibalistic banquet, brutal violence."),
+      cdo('The Comedy of Errors',"Two sets of identical twins — two masters (Antipholus) and two servants (Dromio) — cause uproarious confusion in the Mediterranean port of Ephesus. Mistaken identities and slapstick chaos.",['Comedy of Errors']),
+      cdo("Love's Labour's Lost","Four young lords swear to study and avoid women, then four French ladies arrive. Famous for lords spying on each other reciting love poems in a royal garden."),
+      cdo("All's Well That Ends Well","Helena, a low-born physician's daughter, cures the King of France and demands the noble Bertram as her husband. Famous for the midnight bed-trick."),
+      cdo('Troilus and Cressida',"Trojan War setting — lovers parting at dawn, Greek warriors in armour outside Troy, sulky Achilles in his tent. Cynical, bitter, and unromantic."),
+      cdo('The Two Gentlemen of Verona',"Two best friends (Valentine and Proteus) both fall for the same woman. Famous for the dog Crab — a real live dog onstage. A forest of outlaws.",['Two Gentlemen of Verona']),
+      cdo('Timon of Athens',"A wealthy Athenian lord lavishly hosts feasts, goes broke, is abandoned by his fair-weather friends, and becomes a raving misanthrope living in a cave by the sea."),
+      cdo('Pericles',"A wandering prince's epic sea voyage — shipwrecks, a long-lost daughter (Marina) found again, Mediterranean ports, and a riddling king of Antioch. Episodic adventure."),
+      cdo('Cymbeline',"Ancient British king's drama — a princess (Imogen) disguised as a boy fleeing into the Welsh mountains, a wager about her chastity, and a Roman invasion. Mix of fairy tale and history."),
+      cdo('The Two Noble Kinsmen',"Two cousins (Palamon and Arcite) imprisoned in a tower spot the same princess (Emilia) through a window and become bitter rivals. A knightly duel and a mad jailer's daughter.",['Two Noble Kinsmen']),
     ]
   },
   {

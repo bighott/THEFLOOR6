@@ -291,6 +291,37 @@
   gap: 12px;
   color: var(--text-dim);
 }
+
+.quiz-description-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px 36px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 200px;
+  justify-content: center;
+}
+.quiz-description-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.quiz-description-text {
+  font-size: 19px;
+  line-height: 1.65;
+  color: var(--text);
+  font-weight: 500;
+}
+.reveal-requeue {
+  font-weight: 500;
+  color: var(--text-muted);
+  font-style: italic;
+}
 .quiz-image-placeholder .spinner {
   width: 36px; height: 36px;
   border: 3px solid var(--border);
