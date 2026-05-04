@@ -261,7 +261,9 @@ const state = {
   index: 0,
   score: 0,
   wrong: [],
-  lastFeedback: null
+  phase: 'asking',
+  result: null,
+  userAnswer: ''
 };
 
 function normalize(s) {
@@ -319,7 +321,9 @@ function startQuiz() {
   state.index = 0;
   state.score = 0;
   state.wrong = [];
-  state.lastFeedback = null;
+  state.phase = 'asking';
+  state.result = null;
+  state.userAnswer = '';
   state.view = 'quiz';
   renderQuiz();
 }
@@ -332,44 +336,104 @@ function renderQuiz() {
   }
   const q = state.pool[state.index];
   const total = state.pool.length;
-  const pct = Math.round((state.index / total) * 100);
-  const fb = state.lastFeedback;
-  const fbHtml = fb
-    ? `<div class="feedback ${fb.correct ? 'correct' : 'wrong'}">
-         ${fb.correct
-            ? '✓ Correct!'
-            : `✗ Wrong. The answer was: <strong>${escapeHtml(fb.answer)}</strong>`}
-       </div>`
-    : '';
+  const answeredSoFar = state.phase === 'asking' ? state.index : state.index + 1;
+  const pct = Math.round((answeredSoFar / total) * 100);
 
-  app.innerHTML = `
+  const head = `
     <div class="qhead">
       <div>Question <strong>${state.index + 1}</strong> of ${total}</div>
       <div>Hint: <span class="artist">${escapeHtml(q.artist)}</span></div>
     </div>
     <div class="prompt">${escapeHtml(q.prompt)}</div>
-    <input id="answer" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type the missing word..." />
-    <div class="actions">
-      <button id="submit">Submit</button>
-      <button id="quit" class="secondary">Quit &amp; see score</button>
-    </div>
-    ${fbHtml}
+  `;
+  const scoreBar = `
     <div class="scorebar">
-      <span>Score: ${state.score}/${state.index}</span>
+      <span>Score: ${state.score}/${answeredSoFar}</span>
       <div class="progress"><div style="width:${pct}%"></div></div>
       <span>${pct}%</span>
     </div>
   `;
-  const input = document.getElementById('answer');
-  input.focus();
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') submitAnswer();
+
+  if (state.phase === 'asking') {
+    app.innerHTML = `
+      ${head}
+      <input id="answer" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type the missing word..." />
+      <div class="actions">
+        <button id="submit">Submit</button>
+        <button id="quit" class="secondary">Quit &amp; see score</button>
+      </div>
+      ${scoreBar}
+    `;
+    const input = document.getElementById('answer');
+    input.focus();
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') submitAnswer();
+    });
+    document.getElementById('submit').addEventListener('click', submitAnswer);
+    document.getElementById('quit').addEventListener('click', quitEarly);
+    return;
+  }
+
+  // phase === 'reviewing'
+  const r = state.result;
+  if (r.correct) {
+    app.innerHTML = `
+      ${head}
+      <input type="text" value="${escapeHtml(state.userAnswer)}" disabled />
+      <div class="feedback correct">✓ Correct! The answer was: <strong>${escapeHtml(r.answer)}</strong></div>
+      <div class="actions">
+        <button id="next">Next →</button>
+        <button id="quit" class="secondary">Quit &amp; see score</button>
+      </div>
+      ${scoreBar}
+    `;
+    const nextBtn = document.getElementById('next');
+    nextBtn.focus();
+    nextBtn.addEventListener('click', goNext);
+    document.addEventListener('keydown', enterAdvancesOnce);
+    document.getElementById('quit').addEventListener('click', quitEarly);
+    return;
+  }
+
+  // wrong: force retype
+  app.innerHTML = `
+    ${head}
+    <input type="text" value="${escapeHtml(state.userAnswer || '(no answer)')}" disabled />
+    <div class="feedback wrong">✗ Wrong. The answer was: <strong>${escapeHtml(r.answer)}</strong></div>
+    <label for="retype" style="margin-top:14px">Type the correct answer to continue:</label>
+    <input id="retype" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type: ${escapeHtml(r.answer)}" />
+    <div class="actions">
+      <button id="next" disabled>Next →</button>
+      <button id="quit" class="secondary">Quit &amp; see score</button>
+    </div>
+    ${scoreBar}
+  `;
+  const retype = document.getElementById('retype');
+  const nextBtn = document.getElementById('next');
+  retype.focus();
+  retype.addEventListener('input', () => {
+    const ok = normalize(retype.value) === normalize(r.answer);
+    nextBtn.disabled = !ok;
   });
-  document.getElementById('submit').addEventListener('click', submitAnswer);
-  document.getElementById('quit').addEventListener('click', () => {
-    state.view = 'summary';
-    renderSummary();
+  retype.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !nextBtn.disabled) goNext();
   });
+  nextBtn.addEventListener('click', goNext);
+  document.getElementById('quit').addEventListener('click', quitEarly);
+}
+
+function enterAdvancesOnce(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.removeEventListener('keydown', enterAdvancesOnce);
+    goNext();
+  }
+}
+
+function quitEarly() {
+  document.removeEventListener('keydown', enterAdvancesOnce);
+  state.view = 'summary';
+  renderSummary();
 }
 
 function submitAnswer() {
@@ -387,8 +451,18 @@ function submitAnswer() {
       yourAnswer: raw.trim()
     });
   }
-  state.lastFeedback = { correct, answer: q.answer };
+  state.userAnswer = raw.trim();
+  state.result = { correct, answer: q.answer };
+  state.phase = 'reviewing';
+  renderQuiz();
+}
+
+function goNext() {
+  document.removeEventListener('keydown', enterAdvancesOnce);
   state.index += 1;
+  state.phase = 'asking';
+  state.result = null;
+  state.userAnswer = '';
   renderQuiz();
 }
 
