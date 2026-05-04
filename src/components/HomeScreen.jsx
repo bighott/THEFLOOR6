@@ -72,7 +72,7 @@ export default function HomeScreen({ onStartQuiz, onStudy }) {
             <div className="card-name">{cat.name}</div>
             <div className="card-desc">{cat.description}</div>
             <div className="card-footer">
-              <span className="card-count">{cat.items.length} images</span>
+              <span className="card-count">{cat.items.length} {cat.descriptionOnly ? 'descriptions' : 'images'}</span>
               <div className="card-footer-actions">
                 <button
                   className="card-study-btn"
