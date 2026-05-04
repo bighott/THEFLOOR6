@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hair Metal Fill-in-the-Blank Quiz</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --panel: #14141c;
+    --panel-2: #1c1c28;
+    --ink: #f3f3f7;
+    --muted: #9a9aae;
+    --accent: #ff2e88;
+    --accent-2: #ffd23f;
+    --green: #3ddc84;
+    --red: #ff5577;
+    --border: #2a2a3a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(255,46,136,.18), transparent 60%),
+      radial-gradient(1000px 500px at -10% 110%, rgba(255,210,63,.12), transparent 60%),
+      var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 32px 16px 64px;
+  }
+  .wrap {
+    width: 100%;
+    max-width: 720px;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  h1 {
+    font-size: 28px;
+    margin: 0 0 6px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .sub { color: var(--muted); font-size: 14px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.4);
+  }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 14px 0 6px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  input[type="number"], input[type="text"] {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 16px;
+    width: 100%;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input[type="number"] { width: 120px; }
+  input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,46,136,.18); }
+  .check {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: var(--ink); font-size: 14px;
+  }
+  .check input { accent-color: var(--accent); width: 16px; height: 16px; }
+  button {
+    background: linear-gradient(90deg, var(--accent), #ff5da3);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: .3px;
+    transition: transform .05s ease, filter .15s ease;
+  }
+  button.secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--ink);
+  }
+  button:hover:not(:disabled) { filter: brightness(1.1); }
+  button:active:not(:disabled) { transform: translateY(1px); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .qhead {
+    display: flex; justify-content: space-between; align-items: baseline;
+    color: var(--muted); font-size: 13px; margin-bottom: 8px;
+  }
+  .artist { color: var(--accent-2); font-weight: 600; }
+  .prompt {
+    font-size: 22px; font-weight: 700; line-height: 1.35;
+    margin: 8px 0 18px;
+  }
+  .feedback {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 15px;
+    border: 1px solid transparent;
+  }
+  .feedback.correct { background: rgba(61,220,132,.1); border-color: rgba(61,220,132,.4); color: var(--green); }
+  .feedback.wrong   { background: rgba(255,85,119,.08); border-color: rgba(255,85,119,.35); color: var(--red); }
+  .scorebar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 18px; color: var(--muted); font-size: 13px;
+  }
+  .progress {
+    flex: 1; height: 6px; background: var(--panel-2); border-radius: 999px; margin: 0 12px; overflow: hidden;
+  }
+  .progress > div {
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    width: 0%; transition: width .3s ease;
+  }
+  .summary h2 { margin-top: 0; }
+  .pct { font-size: 36px; font-weight: 800; }
+  .pct.good { color: var(--green); }
+  .pct.bad { color: var(--red); }
+  .missed { margin-top: 18px; }
+  .missed-item {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  .missed-item .top { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+  .missed-item .yours { color: var(--red); }
+  .missed-item .correct { color: var(--green); }
+  .footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 18px; }
+  .actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>🤘 Hair Metal Quiz 🤘</h1>
+      <div class="sub">Fill in the blank. 90 songs. Big hair encouraged.</div>
+    </header>
+    <div id="app" class="card"></div>
+    <div class="footer">Type your answer and press Enter. Case &amp; punctuation don't matter.</div>
+  </div>
+
+<script>
+const QUESTIONS = [
+  {"prompt": "Bringin' on the _______", "answer": "Heartbreak", "artist": "Def Leppard"},
+  {"prompt": "Turn up the _______", "answer": "Radio", "artist": "Autograph"},
+  {"prompt": "No One Like _______", "answer": "You", "artist": "Scorpions"},
+  {"prompt": "High _______", "answer": "Enough", "artist": "Damn Yankees"},
+  {"prompt": "Kiss Me _______", "answer": "Deadly", "artist": "Lita Ford"},
+  {"prompt": "We're Not Gonna _______ It", "answer": "Take", "artist": "Twisted Sister"},
+  {"prompt": "November _______", "answer": "Rain", "artist": "Guns N' Roses"},
+  {"prompt": "Round and _______", "answer": "Round", "artist": "Ratt"},
+  {"prompt": "Love _______", "answer": "Bites", "artist": "Def Leppard"},
+  {"prompt": "Sweet _______ O' Mine", "answer": "Child", "artist": "Guns N' Roses"},
+  {"prompt": "I Wanna _______", "answer": "Rock", "artist": "Twisted Sister"},
+  {"prompt": "Detroit Rock _______", "answer": "City", "artist": "KISS"},
+  {"prompt": "Love of a _______", "answer": "Lifetime", "artist": "Firehouse"},
+  {"prompt": "Every Rose Has Its _______", "answer": "Thorn", "artist": "Poison"},
+  {"prompt": "Cum on Feel the _______", "answer": "Noize", "artist": "Quiet Riot"},
+  {"prompt": "Wanted Dead Or _______", "answer": "Alive", "artist": "Bon Jovi"},
+  {"prompt": "Love _______", "answer": "Song", "artist": "Tesla"},
+  {"prompt": "Heaven _______", "answer": "Sent", "artist": "Dokken"},
+  {"prompt": "Welcome To The _______", "answer": "Jungle", "artist": "Guns N' Roses"},
+  {"prompt": "When I Look Into Your _______", "answer": "Eyes", "artist": "Firehouse"},
+  {"prompt": "To Hell with the _______", "answer": "Devil", "artist": "Stryper"},
+  {"prompt": "_______ City", "answer": "Paradise", "artist": "Guns N' Roses"},
+  {"prompt": "Mama Weer All _______ Now", "answer": "Crazee", "artist": "Quiet Riot"},
+  {"prompt": "Burning Like a _______", "answer": "Flame", "artist": "Dokken"},
+  {"prompt": "Rock And Roll All _______", "answer": "Nite", "artist": "KISS"},
+  {"prompt": "When the Children _______", "answer": "Cry", "artist": "White Lion"},
+  {"prompt": "Girls, Girls, _______", "answer": "Girls", "artist": "Mötley Crüe"},
+  {"prompt": "Once Bitten Twice _______", "answer": "Shy", "artist": "Great White"},
+  {"prompt": "Without _______", "answer": "You", "artist": "Mötley Crüe"},
+  {"prompt": "Rock You Like A _______", "answer": "Hurricane", "artist": "Scorpions"},
+  {"prompt": "Why Can't This Be _______", "answer": "Love", "artist": "Van Halen"},
+  {"prompt": "Don't Know What You Got (Till It's _______)", "answer": "Gone", "artist": "Cinderella"},
+  {"prompt": "Nobody's _______", "answer": "Fool", "artist": "Cinderella"},
+  {"prompt": "Shout It Out _______", "answer": "Loud", "artist": "KISS"},
+  {"prompt": "18 and _______", "answer": "Life", "artist": "Skid Row"},
+  {"prompt": "Unskinny _______", "answer": "Bop", "artist": "Poison"},
+  {"prompt": "Livin' On A _______", "answer": "Prayer", "artist": "Bon Jovi"},
+  {"prompt": "Dr. _______", "answer": "Feelgood", "artist": "Mötley Crüe"},
+  {"prompt": "Fly High _______", "answer": "Michelle", "artist": "Enuff Z'Nuff"},
+  {"prompt": "Sister _______", "answer": "Christian", "artist": "Night Ranger"},
+  {"prompt": "You Give Love A Bad _______", "answer": "Name", "artist": "Bon Jovi"},
+  {"prompt": "Cherry _______", "answer": "Pie", "artist": "Warrant"},
+  {"prompt": "I Was Made For _______ You", "answer": "Lovin'", "artist": "KISS"},
+  {"prompt": "Get The _______ Out", "answer": "Funk", "artist": "Extreme"},
+  {"prompt": "I Remember _______", "answer": "You", "artist": "Skid Row"},
+  {"prompt": "Alone _______", "answer": "Again", "artist": "Dokken"},
+  {"prompt": "Lay It _______", "answer": "Down", "artist": "Ratt"},
+  {"prompt": "Where You Goin' _______", "answer": "Now", "artist": "Damn Yankees"},
+  {"prompt": "Sentimental _______", "answer": "Street", "artist": "Night Ranger"},
+  {"prompt": "Metal Health (Bang Your _______)", "answer": "Head", "artist": "Quiet Riot"},
+  {"prompt": "Edge Of A Broken _______", "answer": "Heart", "artist": "Vixen"},
+  {"prompt": "Just Like _______", "answer": "Paradise", "artist": "David Lee Roth"},
+  {"prompt": "Cold Day in _______", "answer": "Hell", "artist": "Steeler"},
+  {"prompt": "Kickstart My _______", "answer": "Heart", "artist": "Mötley Crüe"},
+  {"prompt": "Never Let _______", "answer": "Go", "artist": "Kick Axe"},
+  {"prompt": "Someone Like _______", "answer": "You", "artist": "Bang Tango"},
+  {"prompt": "Miles _______", "answer": "Away", "artist": "Winger"},
+  {"prompt": "Give It To Me _______", "answer": "Good", "artist": "Trixter"},
+  {"prompt": "Naughty _______", "answer": "Naughty", "artist": "Danger Danger"},
+  {"prompt": "Smooth up in _______", "answer": "Ya", "artist": "Bulletboys"},
+  {"prompt": "Feel The _______", "answer": "Shake", "artist": "Jetboy"},
+  {"prompt": "Rock _______", "answer": "Bottom", "artist": "House Of Lords"},
+  {"prompt": "Up All _______", "answer": "Night", "artist": "Slaughter"},
+  {"prompt": "Bang _______", "answer": "Bang", "artist": "Danger Danger"},
+  {"prompt": "Teas'n, _______", "answer": "Pleas'n", "artist": "Dangerous Toys"},
+  {"prompt": "10,000 _______ (In One)", "answer": "Lovers", "artist": "TNT"},
+  {"prompt": "Soldiers Under _______", "answer": "Command", "artist": "Stryper"},
+  {"prompt": "Sister of _______", "answer": "Pain", "artist": "Vince Neil"},
+  {"prompt": "Prime _______", "answer": "Mover", "artist": "Zodiac Mindwarp"},
+  {"prompt": "Is This _______", "answer": "Love", "artist": "Whitesnake"},
+  {"prompt": "The Final _______", "answer": "Countdown", "artist": "Europe"},
+  {"prompt": "Rock the _______", "answer": "Night", "artist": "Europe"},
+  {"prompt": "Youth Gone _______", "answer": "Wild", "artist": "Skid Row"},
+  {"prompt": "Talk Dirty To _______", "answer": "Me", "artist": "Poison"},
+  {"prompt": "Nothin' But A Good _______", "answer": "Time", "artist": "Poison"},
+  {"prompt": "Modern Day _______", "answer": "Cowboy", "artist": "Tesla"},
+  {"prompt": "Bad _______", "answer": "Medicine", "artist": "Bon Jovi"},
+  {"prompt": "Separate Ways (Worlds _______)", "answer": "Apart", "artist": "Journey"},
+  {"prompt": "I Want It _______", "answer": "All", "artist": "Queen"},
+  {"prompt": "Working for the _______", "answer": "Weekend", "artist": "Loverboy"},
+  {"prompt": "Here I Go _______", "answer": "Again", "artist": "Whitesnake"},
+  {"prompt": "Master of _______", "answer": "Puppets", "artist": "Metallica"},
+  {"prompt": "Cult of _______", "answer": "Personality", "artist": "Living Colour"},
+  {"prompt": "You Could Be _______", "answer": "Mine", "artist": "Guns N' Roses"},
+  {"prompt": "Alien _______", "answer": "Nation", "artist": "Scorpions"},
+  {"prompt": "Monkey _______", "answer": "Business", "artist": "Skid Row"},
+  {"prompt": "What You Give is What You _______", "answer": "Get", "artist": "Ratt"},
+  {"prompt": "Shake & _______", "answer": "Tumble", "artist": "FireHouse"},
+  {"prompt": "Edison's _______", "answer": "Medicine", "artist": "Tesla"},
+  {"prompt": "Ain't Talking 'Bout _______", "answer": "Love", "artist": "Van Halen"}
+];
+
+const app = document.getElementById('app');
+
+const state = {
+  view: 'setup',
+  count: QUESTIONS.length,
+  randomize: true,
+  pool: [],
+  index: 0,
+  score: 0,
+  wrong: [],
+  lastFeedback: null
+};
+
+function normalize(s) {
+  return (s || '')
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/^[\s\p{P}]+|[\s\p{P}]+$/gu, '');
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function renderSetup() {
+  app.innerHTML = `
+    <h2 style="margin-top:0">Set up your quiz</h2>
+    <label for="count">How many questions? (1-${QUESTIONS.length})</label>
+    <input id="count" type="number" min="1" max="${QUESTIONS.length}" value="${state.count}" />
+    <label class="check" style="margin-top:14px">
+      <input id="rand" type="checkbox" ${state.randomize ? 'checked' : ''} />
+      Randomize order
+    </label>
+    <div class="actions">
+      <button id="start">Start quiz</button>
+    </div>
+  `;
+  document.getElementById('start').addEventListener('click', startQuiz);
+  document.getElementById('count').addEventListener('keydown', e => {
+    if (e.key === 'Enter') startQuiz();
+  });
+}
+
+function startQuiz() {
+  const countEl = document.getElementById('count');
+  const randEl = document.getElementById('rand');
+  let count = parseInt(countEl.value, 10);
+  if (!Number.isFinite(count)) count = QUESTIONS.length;
+  count = Math.max(1, Math.min(QUESTIONS.length, count));
+  state.count = count;
+  state.randomize = randEl.checked;
+  const base = state.randomize ? shuffle(QUESTIONS) : QUESTIONS.slice();
+  state.pool = base.slice(0, count);
+  state.index = 0;
+  state.score = 0;
+  state.wrong = [];
+  state.lastFeedback = null;
+  state.view = 'quiz';
+  renderQuiz();
+}
+
+function renderQuiz() {
+  if (state.index >= state.pool.length) {
+    state.view = 'summary';
+    renderSummary();
+    return;
+  }
+  const q = state.pool[state.index];
+  const total = state.pool.length;
+  const pct = Math.round((state.index / total) * 100);
+  const fb = state.lastFeedback;
+  const fbHtml = fb
+    ? `<div class="feedback ${fb.correct ? 'correct' : 'wrong'}">
+         ${fb.correct
+            ? '✓ Correct!'
+            : `✗ Wrong. The answer was: <strong>${escapeHtml(fb.answer)}</strong>`}
+       </div>`
+    : '';
+
+  app.innerHTML = `
+    <div class="qhead">
+      <div>Question <strong>${state.index + 1}</strong> of ${total}</div>
+      <div>Hint: <span class="artist">${escapeHtml(q.artist)}</span></div>
+    </div>
+    <div class="prompt">${escapeHtml(q.prompt)}</div>
+    <input id="answer" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type the missing word..." />
+    <div class="actions">
+      <button id="submit">Submit</button>
+      <button id="quit" class="secondary">Quit &amp; see score</button>
+    </div>
+    ${fbHtml}
+    <div class="scorebar">
+      <span>Score: ${state.score}/${state.index}</span>
+      <div class="progress"><div style="width:${pct}%"></div></div>
+      <span>${pct}%</span>
+    </div>
+  `;
+  const input = document.getElementById('answer');
+  input.focus();
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitAnswer();
+  });
+  document.getElementById('submit').addEventListener('click', submitAnswer);
+  document.getElementById('quit').addEventListener('click', () => {
+    state.view = 'summary';
+    renderSummary();
+  });
+}
+
+function submitAnswer() {
+  const input = document.getElementById('answer');
+  const raw = input.value;
+  const q = state.pool[state.index];
+  const correct = normalize(raw) === normalize(q.answer);
+  if (correct) {
+    state.score += 1;
+  } else {
+    state.wrong.push({
+      prompt: q.prompt,
+      answer: q.answer,
+      artist: q.artist,
+      yourAnswer: raw.trim()
+    });
+  }
+  state.lastFeedback = { correct, answer: q.answer };
+  state.index += 1;
+  renderQuiz();
+}
+
+function renderSummary() {
+  const asked = state.index;
+  const pct = asked > 0 ? (state.score / asked) * 100 : 0;
+  const cls = pct >= 70 ? 'good' : 'bad';
+  const missedHtml = state.wrong.length
+    ? `<div class="missed">
+         <h3>You missed these:</h3>
+         ${state.wrong.map(w => `
+           <div class="missed-item">
+             <div class="top"><span class="artist">${escapeHtml(w.artist)}</span> — ${escapeHtml(w.prompt)}</div>
+             <div><span class="yours">your answer: ${escapeHtml(w.yourAnswer || '(blank)')}</span> · <span class="correct">correct: ${escapeHtml(w.answer)}</span></div>
+           </div>`).join('')}
+       </div>`
+    : (asked > 0 ? '<p style="color:var(--green)">Perfect score! You truly are a Hair Metal God. 🎸</p>' : '');
+
+  app.innerHTML = `
+    <div class="summary">
+      <h2>Final score</h2>
+      <div class="pct ${cls}">${state.score} / ${asked} <span style="font-size:18px;color:var(--muted)">(${pct.toFixed(1)}%)</span></div>
+      ${missedHtml}
+      <div class="actions">
+        <button id="again">Take again</button>
+        <button id="back" class="secondary">Change settings</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('again').addEventListener('click', () => {
+    startQuiz();
+  });
+  document.getElementById('back').addEventListener('click', () => {
+    state.view = 'setup';
+    renderSetup();
+  });
+}
+
+renderSetup();
+</script>
+</body>
+</html>
